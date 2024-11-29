@@ -1,0 +1,118 @@
+<script>
+
+And let's make the test data load more visible by adding:
+
+```javascript:/src/index.html```
+function loadTestData() {
+    console.log('Loading test data...');
+    const testHtml = `
+        <div class="chat-message">
+            <span class="sender">John</span>
+            <span class="message-text">Hey @sarah, check this out!</span>
+            <span class="timestamp">2023-10-20 14:30</span>
+        </div>
+        <div class="chat-message">
+            <span class="sender">Sarah</span>
+            <span class="message-text">Thanks @john, I'll take a look!</span>
+            <span class="timestamp">2023-10-20 14:31</span>
+        </div>
+    `;
+    const messages = loadChatWithMentions(testHtml);
+    displayMessages(messages);
+    console.log('Test data loaded successfully!');
+}
+
+    function handleFileUpload() {
+        const fileInput = document.getElementById('fileInput');
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            const content = event.target.result;
+            const messages = loadChatWithMentions(content);
+            displayMessages(messages);
+        };
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            reader.readAsText(file);
+        });
+    }
+
+    function loadChatWithMentions(htmlText) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        const chatMessages = [];
+        
+        const messageElements = doc.querySelectorAll('.chat-message');
+        
+        messageElements.forEach(element => {
+            const rawText = element.querySelector('.message-text').textContent;
+            const mentions = parseMentions(rawText);
+            const highlightedText = highlightMentions(rawText);
+            
+            const message = {
+                text: rawText,
+                highlightedText: highlightedText,
+                mentions: mentions,
+                timestamp: element.querySelector('.timestamp').textContent,
+                sender: element.querySelector('.sender').textContent
+            };
+            chatMessages.push(message);
+        });
+        
+        return chatMessages;
+    }
+
+    function parseMentions(text) {
+        const mentionRegex = /@[\w-]+/g;
+        const mentions = text.match(mentionRegex) || [];
+        return mentions.map(mention => mention.substring(1));
+    }
+
+    function highlightMentions(text) {
+        return text.replace(/@([\w-]+)/g, '<span class="mention">@$1</span>');
+    }
+
+    function displayMessages(messages) {
+        const container = document.getElementById('chat-container');
+        container.innerHTML = ''; // Clear previous messages
+        
+        messages.forEach(message => {
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.innerHTML = `
+                <strong>${message.sender}</strong>
+                <div>${message.highlightedText}</div>
+                <small class="timestamp">${message.timestamp}</small>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function loadTestData() {
+        const testHtml = `
+            <div class="chat-message">
+                <span class="sender">John</span>
+                <span class="message-text">Hey @sarah, check this out!</span>
+                <span class="timestamp">2023-10-20 14:30</span>
+            </div>
+            <div class="chat-message">
+                <span class="sender">Sarah</span>
+                <span class="message-text">Thanks @john, I'll take a look!</span>
+                <span class="timestamp">2023-10-20 14:31</span>
+            </div>
+            <div class="chat-message">
+                <span class="sender">Mike</span>
+                <span class="message-text">@john @sarah great work team!</span>
+                <span class="timestamp">2023-10-20 14:35</span>
+            </div>
+        `;
+        const messages = loadChatWithMentions(testHtml);
+        displayMessages(messages);
+    }
+
+    // Initialize the file upload handler when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        handleFileUpload();
+    });
+</script>
